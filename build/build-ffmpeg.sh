@@ -91,8 +91,11 @@ COMMON=(
 )
 
 case "$TARGET" in
+  # --disable-autodetect also switches off the AVFoundation framework and
+  # pthreads, and the avfoundation indev needs both. Without them configure
+  # drops the indev with only a WARNING, and the smoke test catches it.
   mac-arm64)
-    PLATFORM=(--arch=arm64 --enable-indev=avfoundation)
+    PLATFORM=(--arch=arm64 --enable-avfoundation --enable-pthreads --enable-indev=avfoundation)
     BIN=ffmpeg ;;
   mac-x64)
     # macos-latest runners are Apple Silicon, so the Intel slice is a cross
@@ -101,7 +104,7 @@ case "$TARGET" in
     PLATFORM=(
       --arch=x86_64 --target-os=darwin --enable-cross-compile --disable-x86asm
       --cc="clang -arch x86_64" --extra-ldflags=-arch\ x86_64
-      --enable-indev=avfoundation
+      --enable-avfoundation --enable-pthreads --enable-indev=avfoundation
     )
     BIN=ffmpeg ;;
   win64)

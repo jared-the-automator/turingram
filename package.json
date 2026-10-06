@@ -20,7 +20,7 @@
     "pretest": "node -e \"new (require('better-sqlite3'))(':memory:')\" 2>/dev/null || npm rebuild better-sqlite3",
     "test": "npm run test --workspace=packages/main",
     "electron": "electron packages/main/dist/index.js",
-    "predist": "node build/check-builder-config.js && cd node_modules/better-sqlite3 && npx prebuild-install --runtime electron --target $(node -p \"require('electron/package.json').version\") --force",
+    "predist": "node build/check-builder-config.js && node build/prebuild-sqlite.js",
     "dist": "npm run build && electron-builder --config electron-builder.config.js",
     "build-swift": "bash packages/main/scripts/build-swift.sh",
     "rebuild-native": "electron-rebuild -f",
