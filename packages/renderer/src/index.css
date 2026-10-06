@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans:    "Space Grotesk", system-ui, -apple-system, sans-serif;
+  --font-display: "Audiowide", "Space Grotesk", sans-serif;
+  --font-mono:    ui-monospace, "Cascadia Mono", "Fira Mono", monospace;
+
+  /* Turingyde synthwave dark — hsl(261 89% 7%) base */
+  --color-base:       oklch(0.10 0.040 277);
+  --color-surface:    oklch(0.14 0.032 277);
+  --color-surface-hi: oklch(0.19 0.026 277);
+  --color-edge:       oklch(0.29 0.055 277);
+  --color-edge-sub:   oklch(0.21 0.038 277);
+
+  /* Text — hsl(210 40% 98%) primary, secondary/tertiary verified against WCAG:
+     sub 11.1:1 and muted 6.2:1 on base (muted was 3.8:1 at L 0.52 — failed AA
+     for exactly the 10px uppercase labels and placeholders it is used on). */
+  --color-hi:    oklch(0.96 0.004 210);
+  --color-sub:   oklch(0.80 0.010 215);
+  --color-muted: oklch(0.64 0.010 215);
+
+  /* Celeste — Turingyde PRIMARY — hsl(161 94% 81%) */
+  --color-celeste:    oklch(0.85 0.17 162);
+  --color-celeste-hi: oklch(0.91 0.13 162);
+  --color-celeste-lo: oklch(0.65 0.14 162);
+
+  /* Violet — secondary accent, speaker labels */
+  --color-violet:    oklch(0.58 0.20 293);
+  --color-violet-hi: oklch(0.68 0.16 293);
+
+  /* Semantic */
+  --color-danger: oklch(0.65 0.19 25);
+}
+
+/* Light theme — a standard corporate look: soft-white surfaces, a professional
+   blue accent in place of the synthwave celeste-green, and cool near-black ink.
+   The @theme block above is the default (dark); these override the same tokens
+   at runtime when the root carries data-theme="light", so every utility and
+   every var(--color-*) inline style follows with no component changes. Text/accent
+   values are chosen for WCAG AA against the surfaces they sit on. */
+:root[data-theme="light"] {
+  --color-base:       oklch(0.99 0.004 250);
+  --color-surface:    oklch(0.975 0.006 250);
+  --color-surface-hi: oklch(0.95 0.008 250);
+  --color-edge:       oklch(0.87 0.012 250);
+  --color-edge-sub:   oklch(0.93 0.008 250);
+
+  --color-hi:    oklch(0.27 0.021 262);
+  --color-sub:   oklch(0.46 0.020 262);
+  --color-muted: oklch(0.50 0.016 262);
+
+  /* Accent kept under the "celeste" token name so all bg-celeste / text-celeste
+     usages recolor to blue. Button text uses var(--color-base) (near-white here),
+     which reads AA on this blue. */
+  --color-celeste:    oklch(0.50 0.150 252);
+  --color-celeste-hi: oklch(0.56 0.140 252);
+  --color-celeste-lo: oklch(0.43 0.150 252);
+
+  --color-violet:    oklch(0.48 0.190 293);
+  --color-violet-hi: oklch(0.55 0.160 293);
+
+  --color-danger: oklch(0.52 0.200 25);
+}
+
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Selection follows the active accent instead of a hardcoded green. */
+::selection {
+  background-color: color-mix(in oklch, var(--color-celeste) 28%, transparent);
+  color: inherit;
+}
+
+.font-display { font-family: var(--font-display); }
+.tabular { font-variant-numeric: tabular-nums; }

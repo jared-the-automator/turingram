@@ -1,0 +1,278 @@
+name: Build releases
+
+# Manual only, deliberately. Private-repo runners bill at 2x for Windows and
+# 10x for macOS, so a push-triggered build would spend minutes on every commit.
+# Add a `push: tags: ['v*']` trigger once the minute budget is known.
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: Which platform to build
+        required: true
+        default: all
+        type: choice
+        options: [all, mac, windows, linux]
+
+jobs:
+  # Cross-compiled on Linux rather than built on the Windows runner: mingw-w64
+  # is one apt install, where a native build would need MSVC or MSYS2 set up
+  # first. Ubuntu runners also bill at 1x against Windows' 2x.
+  ffmpeg-windows:
+    if: inputs.platform == 'all' || inputs.platform == 'windows'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install the mingw-w64 cross toolchain
+        run: sudo apt-get update && sudo apt-get install -y mingw-w64
+
+      # Keyed on the build script, which pins the ffmpeg version and carries the
+      # whole component list, so any change to what gets built misses the cache.
+      - uses: actions/cache@v4
+        with:
+          path: dist-ffmpeg
+          key: ffmpeg-win64-${{ hashFiles('build/build-ffmpeg.sh') }}
+
+      - name: Build a minimal LGPL ffmpeg for Windows
+        run: |
+          if [ ! -x dist-ffmpeg/ffmpeg.exe ]; then
+            ./build/build-ffmpeg.sh win64 dist-ffmpeg/ffmpeg.exe
+          fi
+          ls -la dist-ffmpeg
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ffmpeg-win64
+          path: dist-ffmpeg/*
+          if-no-files-found: error
+
+  macos:
+    if: inputs.platform == 'all' || inputs.platform == 'mac'
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - run: npm ci
+
+      # Caches dist-ffmpeg rather than packages/main/resources: build-swift
+      # writes turingram-audio-helper into that same directory later in this
+      # job, and caching it would restore a stale helper built from whatever the
+      # Swift source looked like when the cache was first populated.
+      - uses: actions/cache@v4
+        with:
+          path: dist-ffmpeg
+          key: ffmpeg-mac-universal-${{ hashFiles('build/build-ffmpeg.sh') }}
+
+      # Two slices, because mac.target builds x64 and arm64 DMGs and a single
+      # binary has to run under both. macos-latest is Apple Silicon, so the
+      # Intel half is a cross build.
+      - name: Build a minimal LGPL ffmpeg for macOS
+        run: |
+          if [ ! -x dist-ffmpeg/ffmpeg ]; then
+            ./build/build-ffmpeg.sh mac-arm64 /tmp/ff/arm64/ffmpeg
+            ./build/build-ffmpeg.sh mac-x64   /tmp/ff/x64/ffmpeg
+            mkdir -p dist-ffmpeg
+            lipo -create -output dist-ffmpeg/ffmpeg /tmp/ff/arm64/ffmpeg /tmp/ff/x64/ffmpeg
+            cp /tmp/ff/arm64/FFMPEG-LICENSE.txt /tmp/ff/arm64/FFMPEG-SOURCE.txt dist-ffmpeg/
+          fi
+          cp dist-ffmpeg/ffmpeg dist-ffmpeg/FFMPEG-LICENSE.txt dist-ffmpeg/FFMPEG-SOURCE.txt \
+            packages/main/resources/
+
+      - name: Confirm ffmpeg is universal and runs Turingram's commands
+        run: |
+          lipo -info packages/main/resources/ffmpeg
+          lipo -info packages/main/resources/ffmpeg | grep -q x86_64
+          lipo -info packages/main/resources/ffmpeg | grep -q arm64
+          ./build/smoke-ffmpeg.sh packages/main/resources/ffmpeg
+
+      # The first real compile of packages/main/swift/AudioHelper.swift. Without
+      # the binary this produces, mac.ts silently falls back to microphone-only
+      # and the two-channel speaker separation does not work at all.
+      - name: Build the Swift system-audio helper
+        run: npm run build-swift
+
+      - name: Confirm the helper binary exists and is universal
+        run: |
+          test -x packages/main/resources/turingram-audio-helper
+          lipo -info packages/main/resources/turingram-audio-helper
+
+      # transcript-core's package.json points main at dist/, which .gitignore
+      # excludes, so a fresh checkout has no entry point and every test file
+      # importing it fails to resolve. Local runs hide this behind a dist/ left
+      # over from an earlier build.
+      - name: Build the shared types package
+        run: npm run build --workspace=packages/transcript-core
+
+      - run: npm test
+
+      # Ad-hoc signed, not Apple-signed. mac.identity: '-' in the builder config
+      # gives the bundle a stable identity so TCC's microphone and screen-recording
+      # grants survive a relaunch; CSC_IDENTITY_AUTO_DISCOVERY is deliberately NOT
+      # set to false here, because that skips signing altogether and takes ad-hoc
+      # with it. Real signing and notarization still need an Apple Developer
+      # certificate, and testers still get the Gatekeeper warning on first launch.
+      # --publish never: electron-builder infers a GitHub publish target from the
+      # git remote and, on CI, tries to push a Release, which fails without a
+      # token. Building a release artifact is not the same act as publishing one
+      # — the artifacts come back through upload-artifact, and cutting an actual
+      # public Release stays a deliberate, separate decision.
+      - name: Package
+        run: npm run dist -- --publish never
+
+      # An unsigned bundle here means the ad-hoc signing silently did not happen,
+      # and the first symptom would be a tester re-granting microphone access on
+      # every launch. Cheaper to catch on the runner.
+      - name: Confirm the app bundle is signed
+        run: |
+          APP=$(ls -d release/mac*/Turingram.app | head -1)
+          codesign -dv "$APP" 2>&1 | tee /tmp/codesign.txt
+          grep -q 'Signature=adhoc' /tmp/codesign.txt
+          codesign --verify --deep --strict "$APP"
+          /usr/libexec/PlistBuddy -c 'Print :NSMicrophoneUsageDescription' "$APP/Contents/Info.plist"
+          /usr/libexec/PlistBuddy -c 'Print :NSAudioCaptureUsageDescription' "$APP/Contents/Info.plist"
+          /usr/libexec/PlistBuddy -c 'Print :LSMinimumSystemVersion' "$APP/Contents/Info.plist"
+          # The bundle signature says nothing about these two. They arrive through
+          # extraResources, so --deep seals their hashes without signing them, and
+          # Apple Silicon refuses to exec an unsigned arm64 binary — the app would
+          # launch and then record nothing. mac.binaries is what signs them, and
+          # this is the only place that proves it worked.
+          for bin in ffmpeg turingram-audio-helper; do
+            echo "--- $bin"
+            codesign --verify --strict "$APP/Contents/Resources/$bin"
+            codesign -dv "$APP/Contents/Resources/$bin" 2>&1 | grep -E 'Signature|Identifier'
+          done
+
+      # always(): the signing check above is an assertion about a DMG that already
+      # exists, and a macOS job costs 10x. Losing the artifact because --deep
+      # --strict tripped over a nested Electron helper would mean paying for the
+      # whole build again to see it.
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: turingram-macos
+          path: |
+            release/*.dmg
+            release/*.zip
+            release/*.blockmap
+            TESTERS.md
+          if-no-files-found: error
+
+  windows:
+    if: inputs.platform == 'all' || inputs.platform == 'windows'
+    needs: ffmpeg-windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - run: npm ci
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: ffmpeg-win64
+          path: packages/main/resources
+
+      - name: Confirm ffmpeg runs Turingram's commands
+        shell: bash
+        run: |
+          chmod +x packages/main/resources/ffmpeg.exe
+          ./build/smoke-ffmpeg.sh packages/main/resources/ffmpeg.exe
+
+      # naudiodon is an optionalDependency, so npm install succeeds even when it
+      # fails to build. On Windows that is not acceptable: win.ts requires it for
+      # BOTH microphone and loopback capture, so a missing module means capture
+      # throws rather than degrading. Fail here instead of shipping a broken app.
+      - name: Confirm naudiodon actually built
+        shell: bash
+        run: |
+          node -e "require('naudiodon'); console.log('naudiodon loaded')"
+
+      # Same fresh-checkout gap as the macOS job: no dist/, no entry point.
+      - name: Build the shared types package
+        run: npm run build --workspace=packages/transcript-core
+
+      # Not `npm test`: the root pretest script uses `2>/dev/null`, which is a
+      # bash-ism that cmd.exe cannot parse. Call the workspace script directly.
+      - name: Test
+        run: npm run test --workspace=packages/main
+
+      # Same reason as the macOS job: build the artifact, do not publish a Release.
+      - name: Package
+        run: npm run dist -- --publish never
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: turingram-windows
+          path: |
+            release/*.exe
+            TESTERS.md
+          if-no-files-found: error
+
+  linux:
+    if: inputs.platform == 'all' || inputs.platform == 'linux'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - run: npm ci
+
+      # ffmpeg's pulse indev links against libpulse, and --disable-autodetect
+      # means configure will not go looking for it — a missing header here does
+      # not fail the build, it produces an ffmpeg that cannot open a microphone.
+      - name: Install the libpulse headers ffmpeg's pulse indev needs
+        run: sudo apt-get update && sudo apt-get install -y libpulse-dev
+
+      - uses: actions/cache@v4
+        with:
+          path: dist-ffmpeg
+          key: ffmpeg-linux64-${{ hashFiles('build/build-ffmpeg.sh') }}
+
+      # Linux bundles ffmpeg like the other two platforms. The .deb could have
+      # depended on the distro package instead, but the AppImage takes no
+      # dependencies at all, so that would leave it failing at the first
+      # recording on any machine without ffmpeg on PATH.
+      - name: Build a minimal LGPL ffmpeg for Linux
+        run: |
+          if [ ! -x dist-ffmpeg/ffmpeg ]; then
+            ./build/build-ffmpeg.sh linux64 dist-ffmpeg/ffmpeg
+          fi
+          cp dist-ffmpeg/ffmpeg dist-ffmpeg/FFMPEG-LICENSE.txt dist-ffmpeg/FFMPEG-SOURCE.txt \
+            packages/main/resources/
+          ./build/smoke-ffmpeg.sh packages/main/resources/ffmpeg
+
+      - name: Build the shared types package
+        run: npm run build --workspace=packages/transcript-core
+
+      - run: npm test
+
+      - name: Package
+        run: npm run dist -- --publish never
+
+      # The bundled binary has to survive packaging, not just exist beforehand:
+      # run the real command shapes against the copy inside the .deb.
+      - name: Confirm the packaged .deb carries a working ffmpeg
+        run: |
+          dpkg-deb -f release/*.deb Depends
+          mkdir -p /tmp/debcheck
+          dpkg-deb -x release/*.deb /tmp/debcheck
+          ./build/smoke-ffmpeg.sh /tmp/debcheck/opt/Turingram/resources/ffmpeg
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: turingram-linux
+          path: |
+            release/*.deb
+            release/*.AppImage
+            TESTERS.md
+          if-no-files-found: error

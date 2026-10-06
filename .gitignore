@@ -1,0 +1,24 @@
+node_modules/
+dist/
+release/
+*.db
+*.wav
+.env
+packages/renderer/src/**/*.js
+turingram-audio-helper
+
+# Built by build/build-ffmpeg.sh, never committed — a 1.5 MB binary per platform
+# in git history, and the whole point is that CI reproduces it from a pinned,
+# signature-checked source tarball.
+dist-ffmpeg/
+packages/main/resources/ffmpeg
+packages/main/resources/ffmpeg.exe
+packages/main/resources/FFMPEG-LICENSE.txt
+packages/main/resources/FFMPEG-SOURCE.txt
+
+# compiled JS must never shadow renderer TS sources (vite resolves .js first)
+packages/renderer/src/**/*.js
+
+# Scratch output dir used to build a .deb without clobbering the release/
+# copy the running app launches from (see turingram-autostart-rot).
+release-deb/

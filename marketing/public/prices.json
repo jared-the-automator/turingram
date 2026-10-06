@@ -1,0 +1,21 @@
+{
+  "lastVerified": "2026-10-05T17:38:50.352Z",
+  "services": {
+    "otter": {
+      "name": "Otter.ai",
+      "url": "https://otter.ai/pricing",
+      "price": null,
+      "currency": "USD",
+      "period": "month",
+      "planName": null
+    },
+    "fireflies": {
+      "name": "Fireflies.ai",
+      "url": "https://fireflies.ai/pricing",
+      "price": null,
+      "currency": "USD",
+      "period": "month",
+      "planName": null
+    }
+  }
+}

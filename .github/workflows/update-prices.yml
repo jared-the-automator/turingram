@@ -1,0 +1,42 @@
+name: Update competitor prices
+
+on:
+  schedule:
+    # 09:00 UTC daily
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+
+jobs:
+  update-prices:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install marketing dependencies
+        working-directory: marketing
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        working-directory: marketing
+        run: npx playwright install chromium --with-deps
+
+      - name: Fetch prices
+        working-directory: marketing
+        run: node scripts/update-prices.mjs
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+      - name: Commit if prices changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add marketing/public/prices.json
+          git diff --staged --quiet || git commit -m "chore: update competitor prices"
+          git push

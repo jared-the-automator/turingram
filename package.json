@@ -1,0 +1,41 @@
+{
+  "name": "turingram-workspace",
+  "version": "0.1.0",
+  "description": "Bot-free meeting capture that writes transcripts your agents can read",
+  "license": "GPL-3.0-only",
+  "author": {
+    "name": "Turingyde",
+    "email": "196123793+jared-the-automator@users.noreply.github.com"
+  },
+  "main": "packages/main/dist/index.js",
+  "desktopName": "turingram-workspace.desktop",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace=packages/transcript-core && npm run build --workspace=packages/main && npm run build --workspace=packages/renderer",
+    "dev:renderer": "npm run dev --workspace=packages/renderer",
+    "dev:main": "npm run dev --workspace=packages/main",
+    "pretest": "node -e \"new (require('better-sqlite3'))(':memory:')\" 2>/dev/null || npm rebuild better-sqlite3",
+    "test": "npm run test --workspace=packages/main",
+    "electron": "electron packages/main/dist/index.js",
+    "predist": "node build/check-builder-config.js && cd node_modules/better-sqlite3 && npx prebuild-install --runtime electron --target $(node -p \"require('electron/package.json').version\") --force",
+    "dist": "npm run build && electron-builder --config electron-builder.config.js",
+    "build-swift": "bash packages/main/scripts/build-swift.sh",
+    "rebuild-native": "electron-rebuild -f",
+    "check:builder": "node build/check-builder-config.js"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0",
+    "electron": "^41.10.6",
+    "electron-builder": "^26.0.0"
+  },
+  "dependencies": {
+    "@turingyde/transcript-core": "*",
+    "better-sqlite3": "^12.0.0"
+  },
+  "optionalDependencies": {
+    "naudiodon": "^2.0.0"
+  }
+}

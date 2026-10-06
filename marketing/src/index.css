@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+@theme {
+  --color-void: #020210;
+  --color-celeste: #40EFAB;
+  --color-surface: #0d0926;
+  --color-surface-deep: #050415;
+  --color-surface-alt: #0a0820;
+  --font-family-sans: 'Space Grotesk', sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #020210;
+  color: #e8e8f0;
+  font-family: 'Space Grotesk', sans-serif;
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: #40EFAB;
+  color: #020210;
+}
+
+* {
+  box-sizing: border-box;
+}

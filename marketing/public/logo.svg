@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <filter id="glow" color-interpolation-filters="sRGB" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background: oklch(0.10 0.040 277) = #020210 -->
+  <rect width="512" height="512" fill="#020210" rx="64"/>
+
+  <!-- ── Crossbar: 3-line sentence, uniform 22px/700 ── -->
+  <text
+    x="256" y="68"
+    text-anchor="middle"
+    font-family="'Space Grotesk', system-ui, sans-serif"
+    font-size="22" font-weight="700"
+    letter-spacing="0.2"
+    fill="#40EFAB">You were saying that it records your</text>
+  <text
+    x="256" y="100"
+    text-anchor="middle"
+    font-family="'Space Grotesk', system-ui, sans-serif"
+    font-size="22" font-weight="700"
+    letter-spacing="0.2"
+    fill="#40EFAB">system audio and transcribes it</text>
+  <text
+    x="256" y="132"
+    text-anchor="middle"
+    font-family="'Space Grotesk', system-ui, sans-serif"
+    font-size="22" font-weight="700"
+    letter-spacing="0.2"
+    fill="#40EFAB">without a bot in the call…</text>
+
+  <!-- gap: y≈142 to y=160 (~18px) -->
+
+  <!-- ── Waveform stem: 9 bars rising from base y=472 ── -->
+  <!-- bar width 10px · gap 3px · step 13px                         -->
+  <!-- span x=199–313 (114px) · centered at x=256                   -->
+  <!-- max height 312px (y=160) · organic profile                    -->
+  <g filter="url(#glow)" fill="#40EFAB">
+    <!-- bar 1  h=260 --> <rect x="199" y="212" width="10" height="260" rx="2"/>
+    <!-- bar 2  h=284 --> <rect x="212" y="188" width="10" height="284" rx="2"/>
+    <!-- bar 3  h=302 --> <rect x="225" y="170" width="10" height="302" rx="2"/>
+    <!-- bar 4  h=267 --> <rect x="238" y="205" width="10" height="267" rx="2"/>
+    <!-- bar 5  h=312 --> <rect x="251" y="160" width="10" height="312" rx="2"/>
+    <!-- bar 6  h=308 --> <rect x="264" y="164" width="10" height="308" rx="2"/>
+    <!-- bar 7  h=287 --> <rect x="277" y="185" width="10" height="287" rx="2"/>
+    <!-- bar 8  h=273 --> <rect x="290" y="199" width="10" height="273" rx="2"/>
+    <!-- bar 9  h=244 --> <rect x="303" y="228" width="10" height="244" rx="2"/>
+  </g>
+</svg>
