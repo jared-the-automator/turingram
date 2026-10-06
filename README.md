@@ -92,7 +92,7 @@ Turingram is free. After every 12 hours of recording, it asks you to buy the dev
 
 ## Website
 
-The Turingram website is <https://turingram.biggerfish.io>. Its source is in `marketing/`.
+The Turingram website is <https://turingram.com>. Its source is in `marketing/`.
 
 ## License
 
