@@ -356,7 +356,7 @@ export default function Settings({ onNavigate }: Props) {
           <label className="flex items-center justify-between gap-3 cursor-pointer mt-3">
             <div>
               <div className="text-[12px] font-medium text-hi">Launch at login</div>
-              <div className="text-[11px] text-sub mt-0.5">Start Turingram automatically when you log in, hidden in the tray, so it's already watching for meetings.</div>
+              <div className="text-[11px] text-sub mt-0.5">Start Turingram automatically when you log in, hidden in the tray or menu bar, so it's already watching for meetings.</div>
             </div>
             <input type="checkbox"
               checked={settings.launchAtLogin ?? false}

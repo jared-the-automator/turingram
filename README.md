@@ -13,11 +13,12 @@ It runs on your own API keys. You pay Deepgram and Google directly, and nothing 
 | Microphone capture | yes | yes | yes |
 | System audio (the other participants) | yes, needs Screen Recording permission | yes | yes, through PipeWire or PulseAudio |
 | Choose the microphone | yes | yes | yes |
-| Offer to record when a call starts | no | no | yes |
+| Offer to record when a call starts | yes, macOS 14.2 or later | yes, for known call apps | yes |
+| Start at login | yes | yes | yes |
 
 macOS needs version 13 Ventura or later, because system audio capture uses ScreenCaptureKit.
 
-Meeting detection watches the sound server with `pactl`, so it works on Linux only. On macOS and Windows, start each recording by hand.
+Meeting detection watches which apps use the microphone, and it only ever asks. On Linux it reads the sound server with `pactl`. On macOS the audio helper reads CoreAudio's per-app audio state, which needs macOS 14.2 and no permission. On Windows it reads the privacy settings' record of microphone use. That record says nothing about playback, so Windows offers only for known call apps, such as Zoom, Teams, Webex, Slack, Discord and the major browsers. Detection on macOS and Windows is new. If it misses a call, open an issue.
 
 ## API keys
 
@@ -79,11 +80,11 @@ The output goes to `release/`. The installers are not code-signed, so macOS and 
 
 ## Buy me a drink
 
-Turingram is free. After every 12 hours of recording, it asks you to buy the developer a drink. A drink costs from $4 to $48 and goes through Stripe Checkout. After the payment, the thank-you page shows a token. Paste it into Settings → Buy me a drink, and the app stops asking on that computer. The app checks the token offline against a public key in `packages/main/src/drinks.ts`. No setting turns the ask off.
+Turingram is free. After every 12 hours of recording, it asks you to buy the developer a drink. A drink costs from $4 to $48 and goes through Stripe Checkout. After the payment, the thank-you page shows a token. Paste it into Settings → Buy me a drink, and the app stops asking on that computer. The app checks the token offline against a public key in `packages/main/src/drinks.ts`. No setting turns the ask off, but you can just reject it every time. Or hey, it's open source; you're welcome to rebuild it yourself without the nag.
 
 ## Website
 
-`marketing/` holds the source of the Turingram website, a Vite and React app. `npm run build` in that directory writes the site to `marketing/dist`. A daily workflow, `.github/workflows/update-prices.yml`, refreshes the competitor prices in `marketing/public/prices.json`.
+`marketing/` holds the source of the Turingram website, a Vite and React app. `npm run build` in that directory writes the site to `marketing/dist`. The comparison table reads competitor prices from `marketing/public/prices.json`, which is edited by hand. The workflow `.github/workflows/update-prices.yml` can refresh that file with Gemini, but it is disabled and needs a `GEMINI_API_KEY` secret.
 
 ## License
 

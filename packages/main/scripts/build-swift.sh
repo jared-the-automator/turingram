@@ -12,13 +12,13 @@ mkdir -p "$OUT_DIR"
 echo "Compiling arm64..."
 swiftc "$SWIFT_SRC" \
   -O -target arm64-apple-macos13.0 \
-  -framework ScreenCaptureKit \
+  -framework ScreenCaptureKit -framework CoreAudio \
   -o "${OUT}-arm64"
 
 echo "Compiling x86_64..."
 swiftc "$SWIFT_SRC" \
   -O -target x86_64-apple-macos13.0 \
-  -framework ScreenCaptureKit \
+  -framework ScreenCaptureKit -framework CoreAudio \
   -o "${OUT}-x86_64"
 
 echo "Creating universal binary..."

@@ -181,7 +181,7 @@ const FEATURES = [
   {
     Icon: Waveform,
     title: 'Dual-channel capture',
-    body: 'Mic and system audio on separate tracks. PipeWire echo cancellation keeps voices clean across the call.',
+    body: 'Mic and system audio on separate tracks, so your own words are never guessed. On Linux, PipeWire echo cancellation also keeps the call out of your mic.',
     large: false,
     highlight: false,
   },
@@ -215,7 +215,7 @@ const FAQS = [
   },
   {
     q: 'Which platforms does it support?',
-    a: 'Linux (deb and AppImage), Windows, and macOS. All three are built from the same codebase.',
+    a: 'Linux (deb and AppImage), Windows, and macOS 13 or later, all built from the same codebase. On all three, Turingram can start at login and offer to record when a call starts. On macOS, that offer needs version 14.2 or later. On Windows, it comes only for known call apps such as Zoom, Teams and the major browsers.',
   },
   {
     q: "What's agentHook format?",
@@ -407,7 +407,7 @@ export default function App() {
               {
                 n: '01',
                 title: 'Hit record',
-                body: 'Turingram captures your mic and system audio on separate channels. Nothing joins the call. Start and stop whenever.',
+                body: 'Turingram captures your mic and system audio on separate channels. Nothing joins the call. Start it yourself, or say yes when it notices a call.',
               },
               {
                 n: '02',
@@ -514,6 +514,7 @@ export default function App() {
               <ul className="space-y-3 mb-8">
                 {[
                   'Linux (deb + AppImage), Windows, macOS',
+                  'Offers to record when a call starts',
                   'All four export formats including agentHook JSON',
                   'Deepgram nova-3 transcription with speaker labels',
                   'Mic and system audio captured on separate channels',

@@ -7,7 +7,13 @@ import { app } from 'electron';
 // watching before they join a call — the whole point of the feature. Done with a
 // freedesktop autostart .desktop file (the mechanism Cinnamon/GNOME/KDE all read,
 // and the same one Flameshot, Surfshark et al. use here) rather than Electron's
-// setLoginItemSettings, whose Linux support is patchy.
+// setLoginItemSettings, whose Linux support is patchy. macOS and Windows use
+// setLoginItemSettings, which is what it was written for.
+
+// Windows registers the Run entry with --hidden. A macOS login item takes no
+// arguments, so index.ts reads wasOpenedAtLogin there instead.
+const LOGIN_ARGS = ['--hidden'];
+const usesLoginItems = () => process.platform === 'darwin' || process.platform === 'win32';
 
 const AUTOSTART_DIR = path.join(os.homedir(), '.config', 'autostart');
 const DESKTOP_FILE = path.join(AUTOSTART_DIR, 'turingram.desktop');
@@ -31,6 +37,7 @@ function launcherCommand(): string {
 }
 
 export function isAutostartEnabled(): boolean {
+  if (usesLoginItems()) return app.getLoginItemSettings({ args: LOGIN_ARGS }).openAtLogin;
   try { return fs.existsSync(DESKTOP_FILE); } catch { return false; }
 }
 
@@ -38,6 +45,12 @@ export function isAutostartEnabled(): boolean {
 // failure here must not break startup, so it is caught and reported false.
 export function setAutostart(enabled: boolean): boolean {
   try {
+    if (usesLoginItems()) {
+      // An unpackaged run would register the bare Electron binary.
+      if (!app.isPackaged) return false;
+      app.setLoginItemSettings({ openAtLogin: enabled, args: LOGIN_ARGS });
+      return true;
+    }
     if (!enabled) {
       if (fs.existsSync(DESKTOP_FILE)) fs.unlinkSync(DESKTOP_FILE);
       return true;

@@ -8,7 +8,7 @@ import { registerIpcHandlers } from './ipc';
 import { migrateTranscriptNames, rebuildIndex } from './agentHook';
 import { writeAgentReadme } from './agentDocs';
 import { resolveTranscriptsDir } from './transcriptsPath';
-import { MeetingDetector } from './meetingDetector';
+import { MeetingDetector, PulseSource, MacSource, WindowsSource, type SignalSource } from './meetingDetector';
 import { alertMeeting, clearAttention } from './meetingAlert';
 import { syncAutostart } from './autostart';
 import { opensExternally } from './externalLinks';
@@ -74,9 +74,11 @@ function createWindow(): BrowserWindow {
     win.loadFile(path.join(process.resourcesPath, 'renderer', 'index.html'));
   }
 
-  // When launched at login (autostart passes --hidden), start in the tray without
-  // popping the window — the app is there to watch for calls, not to greet you.
-  const startHidden = process.argv.includes('--hidden');
+  // When launched at login, start in the tray without popping the window — the
+  // app is there to watch for calls, not to greet you. Linux and Windows pass
+  // --hidden; a macOS login item cannot carry arguments, so macOS asks.
+  const startHidden = process.argv.includes('--hidden') ||
+    (process.platform === 'darwin' && app.getLoginItemSettings().wasOpenedAtLogin);
   win.once('ready-to-show', () => { if (!startHidden) win.show(); });
 
   win.webContents.on('context-menu', (_e, params) => {
@@ -115,6 +117,10 @@ app.on('second-instance', () => {
 
 app.whenReady().then(() => {
   const dataDir = app.getPath('userData');
+
+  // Windows shows a toast only for an app whose id matches its Start menu
+  // shortcut, and the NSIS installer names that shortcut with the appId.
+  if (process.platform === 'win32') app.setAppUserModelId('com.turingyde.turingram');
 
   // Provider credentials, provisioned by whoever operates this install rather
   // than typed into the app. The data dir is the packaged app's location — drop a
@@ -173,9 +179,11 @@ app.whenReady().then(() => {
   syncAutostart(settings.launchAtLogin);
 
   // Watch for a conferencing app grabbing the mic and offer to record. Prompt
-  // only — the detector never starts a recording itself. Linux/PipeWire only for
-  // now (it drives pactl); the mac/win capture backends have no equivalent yet.
-  if (process.platform === 'linux') {
+  // only — the detector never starts a recording itself. Each platform reads
+  // the microphone from its own source: pactl on Linux, the Swift helper on
+  // macOS, the privacy registry on Windows.
+  const source = meetingSource();
+  if (source) {
     detector = new MeetingDetector(
       () => loadSettings(dataDir).autoDetectMeetings,
       () => pipeline?.getState().isRecording ?? false,
@@ -193,10 +201,26 @@ app.whenReady().then(() => {
         },
         c,
       ),
+      source,
     );
     detector.start();
   }
 });
+
+function meetingSource(): SignalSource | null {
+  switch (process.platform) {
+    case 'linux': return new PulseSource();
+    case 'darwin': {
+      const helper = app.isPackaged
+        ? path.join(process.resourcesPath, 'turingram-audio-helper')
+        : path.join(__dirname, '..', 'resources', 'turingram-audio-helper');
+      return new MacSource(helper, 'com.turingyde.turingram');
+    }
+    // Our own recorder never trips it: detection is off while recording.
+    case 'win32': return new WindowsSource(['Turingram.exe']);
+    default: return null;
+  }
+}
 
 // Restores the tray from the version that shipped and worked on this same
 // Cinnamon machine before it was removed (git d8c79fa^ packages/main/src/tray.ts).

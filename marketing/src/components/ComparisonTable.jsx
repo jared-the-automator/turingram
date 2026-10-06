@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { CheckCircle, Minus, CaretDown, Clock } from '@phosphor-icons/react'
 
-// Feature matrix — maintained manually. Prices fetched dynamically from /prices.json.
+// Feature matrix — maintained manually. Prices come from /prices.json, also edited by hand.
 // Values: true = yes, false = no, string = custom label, 'price' = dynamic price cell
 // Column order: Turingram first.
 const ROWS = [
@@ -22,9 +22,9 @@ const ROWS = [
   { cat: 'Transcription', label: 'Speaker diarization', turingram: true,  otter: true, fireflies: true  },
   { cat: 'Transcription', label: 'Multiple languages',   turingram: false, otter: true, fireflies: true  },
 
-  // AI features — built-in vs bring-your-own
-  { cat: 'AI features', label: 'Meeting summaries',              turingram: 'Your AI', otter: true, fireflies: true },
-  { cat: 'AI features', label: 'Action item extraction',          turingram: 'Your AI', otter: true, fireflies: true },
+  // AI features — summaries and action items are built in (Gemini); the rest is bring-your-own
+  { cat: 'AI features', label: 'Meeting summaries',              turingram: true,      otter: true, fireflies: true },
+  { cat: 'AI features', label: 'Action item extraction',          turingram: true,      otter: true, fireflies: true },
   { cat: 'AI features', label: 'Follow-up email draft',           turingram: 'Your AI', otter: true, fireflies: true },
   { cat: 'AI features', label: 'Contact & deal data extraction',  turingram: 'Your AI', otter: true, fireflies: true },
   { cat: 'AI features', label: 'Cross-meeting search',            turingram: 'Your AI', otter: true, fireflies: true },
@@ -91,7 +91,9 @@ export default function ComparisonTable() {
       .catch(() => {})
   }, [])
 
-  const verifiedDate = prices?.lastVerified
+  // A date is only worth showing when it vouches for at least one price.
+  const anyPrice = Object.values(prices?.services ?? {}).some(s => s.price !== null)
+  const verifiedDate = anyPrice && prices?.lastVerified
     ? new Date(prices.lastVerified).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
     : null
 
@@ -171,7 +173,7 @@ export default function ComparisonTable() {
                 Feature matrix maintained manually.{' '}
                 {verifiedDate
                   ? `Prices last verified ${verifiedDate}.`
-                  : 'Prices fetched automatically when available.'}
+                  : 'See each provider’s site for current prices.'}
                 {' '}Competitor features may change.
               </p>
             </div>
