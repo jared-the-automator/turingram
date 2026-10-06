@@ -33,6 +33,8 @@ contextBridge.exposeInMainWorld('api', {
   saveKeys: (updates: Record<string, string>) => ipcRenderer.invoke('keys:save', updates),
   revealEnvFile: () => ipcRenderer.invoke('keys:reveal-env'),
 
+  reportBug: (problem?: string) => ipcRenderer.invoke('app:report-bug', problem),
+
   getDrinkState: () => ipcRenderer.invoke('drinks:state'),
   redeemDrink: (token: string) => ipcRenderer.invoke('drinks:redeem', token),
   onDrinkNag: (cb: (line: string) => void) => {

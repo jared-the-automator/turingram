@@ -319,6 +319,7 @@ describe('MacSource', () => {
     h.spawned[1].emit('close', 0, null);
     vi.advanceTimersByTime(30000);
     expect(h.spawned).toHaveLength(2);
+    expect(src.status()).toBe('off, needs macOS 14.2 or later');
     src.stop();
   });
 });
@@ -343,6 +344,7 @@ describe('WindowsSource', () => {
     h.reg.stdout = consent([]);
     await vi.advanceTimersByTimeAsync(3000);
     expect(onChange).toHaveBeenCalledTimes(2);
+    expect(src.status()).toBe('watching the microphone privacy registry');
     src.stop();
   });
 });
@@ -360,6 +362,7 @@ describe('MeetingDetector with a platform source', () => {
       start: (cb) => { fire = cb; },
       stop: () => { /* nothing */ },
       snapshot: async () => ({ mics, playback: [] }),
+      status: () => 'fake',
     };
     const onDetected = vi.fn();
     const d = new MeetingDetector(() => true, () => false, onDetected, source);

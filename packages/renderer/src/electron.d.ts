@@ -44,6 +44,7 @@ declare global {
       onDrinkNag(cb: (line: string) => void): () => void
       onProcessingProgress(cb: (data: ProcessingProgress) => void): () => void
       onRecordingAutostopped(cb: () => void): () => void
+      reportBug(problem?: string): Promise<void>
       onRecordingError(cb: (message: string) => void): () => void
       onRecordingFailed(cb: (message: string) => void): () => void
       onMeetingDetected(cb: (c: { app: string; title: string }) => void): () => void

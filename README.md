@@ -6,6 +6,10 @@ Turingram records your meetings from your own desktop, with no bot in the call. 
 
 It runs on your own API keys. You pay Deepgram and Google directly, and nothing passes through a Turingram server.
 
+## Install
+
+Download the installer for your system from the [latest release](https://github.com/jared-the-automator/turingram/releases/latest). The installers are not code-signed. On macOS, the first launch is blocked: open System Settings → Privacy & Security and click Open Anyway. If macOS says the app is damaged, run `xattr -dr com.apple.quarantine /Applications/Turingram.app` in Terminal. On Windows, SmartScreen warns you: click More info, then Run anyway.
+
 ## Platforms
 
 | | macOS | Windows | Linux |
@@ -18,7 +22,7 @@ It runs on your own API keys. You pay Deepgram and Google directly, and nothing 
 
 macOS needs version 13 Ventura or later, because system audio capture uses ScreenCaptureKit.
 
-Meeting detection watches which apps use the microphone, and it only ever asks. On Linux it reads the sound server with `pactl`. On macOS the audio helper reads CoreAudio's per-app audio state, which needs macOS 14.2 and no permission. On Windows it reads the privacy settings' record of microphone use. That record says nothing about playback, so Windows offers only for known call apps, such as Zoom, Teams, Webex, Slack, Discord and the major browsers. Detection on macOS and Windows is new. If it misses a call, open an issue.
+Meeting detection watches which apps use the microphone, and it only ever asks. On Linux it reads the sound server with `pactl`. On macOS the audio helper reads CoreAudio's per-app audio state, which needs macOS 14.2 and no permission. On Windows it reads the privacy settings' record of microphone use. That record says nothing about playback, so Windows offers only for known call apps, such as Zoom, Teams, Webex, Slack, Discord and the major browsers. Detection on macOS and Windows is new. If it misses a call, report it as described in [Reporting a problem](#reporting-a-problem).
 
 ## API keys
 
@@ -78,13 +82,17 @@ npm run dist
 
 The output goes to `release/`. The installers are not code-signed, so macOS and Windows warn you on first launch. `build/build-ffmpeg.sh` builds the minimal LGPL ffmpeg that the installers bundle. The workflow in `.github/workflows/release.yml` builds all three platforms on GitHub Actions.
 
+## Reporting a problem
+
+Settings → Help → Report a problem opens a GitHub issue form. The app fills in its version, your system, the state of meeting detection and its recent errors. Nothing is sent until you submit the form, and you can edit or delete any of it first. Issues are public, so read the details before you submit. The screens for a failed recording have the same button, with the error filled in. You can also open an issue directly at <https://github.com/jared-the-automator/turingram/issues>.
+
 ## Buy me a drink
 
 Turingram is free. After every 12 hours of recording, it asks you to buy the developer a drink. A drink costs from $4 to $48 and goes through Stripe Checkout. After the payment, the thank-you page shows a token. Paste it into Settings → Buy me a drink, and the app stops asking on that computer. The app checks the token offline against a public key in `packages/main/src/drinks.ts`. No setting turns the ask off, but you can just reject it every time. Or hey, it's open source; you're welcome to rebuild it yourself without the nag.
 
 ## Website
 
-`marketing/` holds the source of the Turingram website, a Vite and React app. `npm run build` in that directory writes the site to `marketing/dist`. The comparison table reads competitor prices from `marketing/public/prices.json`, which is edited by hand. The workflow `.github/workflows/update-prices.yml` can refresh that file with Gemini, but it is disabled and needs a `GEMINI_API_KEY` secret.
+The Turingram website is <https://turingram.biggerfish.io>. Its source is in `marketing/`.
 
 ## License
 

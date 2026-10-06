@@ -1,4 +1,5 @@
-import { app, BrowserWindow, Menu, Tray, Notification, nativeImage, dialog, shell } from 'electron';
+import { app, BrowserWindow, Menu, Tray, Notification, nativeImage, dialog, shell, ipcMain } from 'electron';
+import os from 'os';
 import path from 'path';
 import { loadEnvFiles } from './env';
 import { getDb, closeDb } from './db/client';
@@ -12,6 +13,7 @@ import { MeetingDetector, PulseSource, MacSource, WindowsSource, type SignalSour
 import { alertMeeting, clearAttention } from './meetingAlert';
 import { syncAutostart } from './autostart';
 import { opensExternally } from './externalLinks';
+import { bugReportUrl, formatDiagnostics, recentProblems } from './bugReport';
 
 
 // Prevent multiple instances — second launch focuses the existing window and exits
@@ -150,6 +152,21 @@ app.whenReady().then(() => {
 
   pipeline = new RecordingPipeline(dataDir, settings, mainWindow);
   registerIpcHandlers(pipeline, dataDir, () => mainWindow);
+
+  // Opens a pre-filled GitHub issue in the browser. The user reviews it there,
+  // so nothing is sent from here.
+  ipcMain.handle('app:report-bug', (_e, problem?: unknown) => {
+    const diagnostics = formatDiagnostics({
+      version: app.getVersion(),
+      platform: process.platform,
+      release: os.release(),
+      arch: process.arch,
+      electron: process.versions.electron,
+      detection: detector?.status() ?? 'not available on this platform',
+      problems: recentProblems(),
+    });
+    void shell.openExternal(bugReportUrl(diagnostics, typeof problem === 'string' ? problem : undefined));
+  });
 
   // Keep the agent-facing folder self-describing, wherever the user has put it.
   // All three are idempotent, and they only ever touch the transcripts directory

@@ -113,6 +113,8 @@ export interface SignalSource {
   start(onChange: () => void): void
   stop(): void
   snapshot(): Promise<Snapshot>
+  // One line for a bug report: is this source watching, and if not, why not.
+  status(): string
 }
 
 // Bundle ids and executable names on macOS and Windows, mapped to the names
@@ -211,6 +213,7 @@ export class PulseSource implements SignalSource {
   private sub: ReturnType<typeof spawn> | null = null;
   private resubscribe: ReturnType<typeof setTimeout> | null = null;
   private stopped = false;
+  private failed = '';
   // How long to wait before re-subscribing after the pactl child exits. Long
   // enough that a PipeWire restart is not a spawn storm, short enough that a
   // call starting right after the restart is still caught.
@@ -224,10 +227,11 @@ export class PulseSource implements SignalSource {
     } catch {
       return; // no pactl — detection simply unavailable
     }
+    this.failed = '';
     this.sub.stdout?.on('data', (chunk: Buffer) => {
       if (/source-output|sink-input/.test(chunk.toString())) onChange();
     });
-    this.sub.on('error', () => { /* pactl vanished — give up quietly */ });
+    this.sub.on('error', (err) => { this.failed = err.message; });
     // pactl dies whenever the sound server does (a PipeWire restart, a crash, a
     // logout/login of the audio stack). Without re-subscribing the detector goes
     // silently deaf for the rest of the session while still looking alive —
@@ -244,6 +248,11 @@ export class PulseSource implements SignalSource {
     this.stopped = true;
     if (this.resubscribe) { clearTimeout(this.resubscribe); this.resubscribe = null; }
     if (this.sub) { this.sub.kill(); this.sub = null; }
+  }
+
+  status(): string {
+    if (this.failed) return `off, pactl failed: ${this.failed}`;
+    return this.sub ? 'watching through pactl' : 'pactl not running';
   }
 
   async snapshot(): Promise<Snapshot> {
@@ -285,6 +294,7 @@ export class MacSource implements SignalSource {
   private restart: ReturnType<typeof setTimeout> | null = null;
   private stopped = false;
   private unsupported = false;
+  private failed = '';
   private last: Snapshot = { mics: [], playback: [] };
   private readonly RESTART_MS = 5000;
 
@@ -307,10 +317,10 @@ export class MacSource implements SignalSource {
         buf = buf.slice(nl + 1);
         if (line.includes('"unsupported"')) { this.unsupported = true; continue; }
         const snap = parseMacSnapshot(line, this.ownBundle);
-        if (snap) { this.last = snap; onChange(); }
+        if (snap) { this.failed = ''; this.last = snap; onChange(); }
       }
     });
-    this.child.on('error', () => { /* helper missing — detection unavailable */ });
+    this.child.on('error', (err) => { this.failed = err.message; });
     this.child.on('close', () => {
       this.child = null;
       if (this.stopped || this.unsupported || this.restart) return;
@@ -325,6 +335,12 @@ export class MacSource implements SignalSource {
     if (this.child) { this.child.stdin?.end(); this.child.kill(); this.child = null; }
   }
 
+  status(): string {
+    if (this.unsupported) return 'off, needs macOS 14.2 or later';
+    if (this.failed) return `off, audio helper failed: ${this.failed}`;
+    return this.child ? 'watching through the audio helper' : 'audio helper restarting';
+  }
+
   async snapshot(): Promise<Snapshot> { return this.last; }
 }
 
@@ -336,6 +352,7 @@ const CONSENT_KEY = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Capabil
 export class WindowsSource implements SignalSource {
   private timer: ReturnType<typeof setInterval> | null = null;
   private last: StreamInfo[] = [];
+  private failed = '';
   private readonly POLL_MS = 3000;
 
   constructor(private ownNames: string[]) {}
@@ -346,10 +363,16 @@ export class WindowsSource implements SignalSource {
       try {
         // windowsHide: without it every poll flashes a console window.
         const { stdout } = await execFileAsync('reg', ['query', CONSENT_KEY, '/s'], { windowsHide: true });
+        this.failed = '';
         const now = parseConsentStore(stdout, this.ownNames);
         const sig = (l: StreamInfo[]) => l.map(s => s.key).sort().join('|');
         if (sig(now) !== sig(this.last)) { this.last = now; onChange(); }
-      } catch { /* key absent until an app first uses the mic */ }
+      } catch (err) {
+        // The key is absent until some app first uses the mic, which is fine;
+        // anything else is worth a line in a bug report.
+        const msg = (err as Error).message;
+        this.failed = /unable to find/i.test(msg) ? '' : msg;
+      }
     };
     this.timer = setInterval(() => { void poll(); }, this.POLL_MS);
     void poll();
@@ -361,6 +384,11 @@ export class WindowsSource implements SignalSource {
 
   // The registry says nothing about playback, so only known conferencing apps
   // qualify on Windows.
+  status(): string {
+    if (this.failed) return `off, registry read failed: ${this.failed.split('\n')[0]}`;
+    return this.timer ? 'watching the microphone privacy registry' : 'not running';
+  }
+
   async snapshot(): Promise<Snapshot> { return { mics: this.last, playback: [] }; }
 }
 
@@ -393,6 +421,10 @@ export class MeetingDetector {
     this.stopped = true;
     if (this.debounce) { clearTimeout(this.debounce); this.debounce = null; }
     this.source.stop();
+  }
+
+  status(): string {
+    return this.isEnabled() ? this.source.status() : 'turned off in Settings';
   }
 
   private schedule(): void {

@@ -56,6 +56,7 @@ import { resolveTranscriptsDir } from '../transcriptsPath';
 import { removeMeetingArtifacts } from '../artifacts';
 import { raiseWindow } from '../meetingAlert';
 import { loadSettings } from '../settings';
+import { noteProblem } from '../bugReport';
 
 export interface RecordingState {
   isRecording: boolean
@@ -307,6 +308,7 @@ export class RecordingPipeline {
     // other way to learn that half the room is missing from it.
     if (captureResult.warning) {
       console.warn('[turingram] capture degraded:', captureResult.warning);
+      noteProblem(captureResult.warning);
       this.win?.webContents.send('recording:error', captureResult.warning);
     }
     // Name the audio by meeting ID so a failed transcription leaves a file we can
@@ -504,6 +506,7 @@ export class RecordingPipeline {
     const line = `[${new Date().toISOString()}] meeting ${meetingId}: ${detail}\n`;
     try { fs.appendFileSync(path.join(this.dataDir, 'transcription-errors.log'), line); } catch { /* ignore */ }
     console.error('[turingram]', line.trim());
+    noteProblem(err instanceof Error ? err.message : String(err));
   }
 
   // Keep the audio when the user wants to re-transcribe with other models (or

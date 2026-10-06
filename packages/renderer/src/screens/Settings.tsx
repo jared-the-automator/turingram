@@ -387,6 +387,18 @@ export default function Settings({ onNavigate }: Props) {
           </label>
         </Section>
 
+        <Section title="Help">
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-[11px] text-sub">
+              Opens a GitHub issue with your app version, system and recent errors filled in. You can edit it, and nothing is sent until you submit it.
+            </div>
+            <button onClick={() => void window.api.reportBug()}
+              className="shrink-0 text-[12px] bg-surface hover:bg-surface-hi border border-edge text-sub hover:text-hi px-3 py-1.5 rounded-md transition-colors">
+              Report a problem
+            </button>
+          </div>
+        </Section>
+
       </div>
     </div>
   );

@@ -1,0 +1,27 @@
+name: Bug report
+description: Something in Turingram did not work.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Settings → Help → Report a problem opens this form with the Diagnostics box already filled in.
+        Remove anything in it that you do not want to publish. Issues on this repository are public.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you expected, and what you got instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: For a missed call prompt, name the call app and whether you used it in a browser or as a desktop app.
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      description: App version, system and recent errors. The app fills this in.
+      render: text

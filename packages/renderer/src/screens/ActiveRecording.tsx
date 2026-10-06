@@ -83,6 +83,10 @@ export default function ActiveRecording({ onNavigate }: Props) {
           className="text-[12px] bg-surface hover:bg-surface-hi border border-edge text-sub hover:text-hi px-4 py-2 rounded-md transition-colors">
           Back to meetings
         </button>
+        <button onClick={() => void window.api.reportBug(captureFailed ?? undefined)}
+          className="text-[11px] text-muted hover:text-sub underline underline-offset-2 transition-colors">
+          Report this problem
+        </button>
       </div>
     );
   }
@@ -95,6 +99,10 @@ export default function ActiveRecording({ onNavigate }: Props) {
         <button onClick={handleErrorDismiss}
           className="text-[12px] bg-surface hover:bg-surface-hi border border-edge text-sub hover:text-hi px-4 py-2 rounded-md transition-colors">
           Back to meetings
+        </button>
+        <button onClick={() => void window.api.reportBug(processingError ?? undefined)}
+          className="text-[11px] text-muted hover:text-sub underline underline-offset-2 transition-colors">
+          Report this problem
         </button>
       </div>
     );
