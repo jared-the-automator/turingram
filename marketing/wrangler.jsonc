@@ -10,6 +10,8 @@
     "not_found_handling": "404-page"
   },
   "routes": [
+    { "pattern": "turingram.com", "custom_domain": true },
+    { "pattern": "www.turingram.com", "custom_domain": true },
     { "pattern": "turingram.biggerfish.io", "custom_domain": true }
   ]
 }
