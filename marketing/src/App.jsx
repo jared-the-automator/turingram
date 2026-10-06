@@ -387,7 +387,7 @@ export default function App() {
               <span className="text-[#40EFAB]">paying for the AI.</span>
             </h2>
             <p className="text-[16px] text-white/55 leading-relaxed max-w-[54ch]">
-              Claude, ChatGPT, and Gemini all summarize meetings, extract action items, and draft follow-up emails. They work from the raw transcript. The transcript was the only thing missing.
+              Turingram writes the summary and action items itself, with your Gemini key. Claude, ChatGPT and Gemini do the rest from the same transcript: follow-up emails, CRM notes, questions across meetings.
             </p>
           </motion.div>
         </div>
