@@ -4,11 +4,11 @@ import type { Screen } from '../App';
 import { useSettings } from '../contexts/SettingsContext';
 import { DrinksPanel } from '../components/Drinks';
 
-interface Props { onNavigate: (s: Screen) => void }
+interface Props { onNavigate: (s: Screen) => void; section?: 'drinks' }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ id, title, children }: { id?: string; title: string; children: React.ReactNode }) {
   return (
-    <div className="py-4 border-b border-edge-sub last:border-0">
+    <div id={id} className="py-4 border-b border-edge-sub last:border-0">
       <h3 className="text-[10px] font-semibold text-muted uppercase tracking-widest mb-3">{title}</h3>
       {children}
     </div>
@@ -230,7 +230,7 @@ function ProviderKeys() {
   );
 }
 
-export default function Settings({ onNavigate }: Props) {
+export default function Settings({ onNavigate, section }: Props) {
   const { settings, audioDevices, updateSettings } = useSettings();
   const [vocabularyText, setVocabularyText] = useState('');
 
@@ -239,6 +239,13 @@ export default function Settings({ onNavigate }: Props) {
       setVocabularyText((settings.vocabulary ?? []).join(', '));
     }
   }, [settings?.vocabulary]);
+
+  // The drink ask's "I already bought one" lands here, and the drink section sits
+  // near the bottom, below everything people come to Settings for.
+  const loaded = settings != null;
+  useEffect(() => {
+    if (loaded && section) document.getElementById(section)?.scrollIntoView({ block: 'start' });
+  }, [loaded, section]);
 
   function handleVocabularySave() {
     const parsed = vocabularyText
@@ -294,10 +301,6 @@ export default function Settings({ onNavigate }: Props) {
         </Section>
 
         <ProviderKeys />
-
-        <Section title="Buy me a drink">
-          <DrinksPanel />
-        </Section>
 
         <Section title="For your agents">
           <AgentAccess />
@@ -385,6 +388,10 @@ export default function Settings({ onNavigate }: Props) {
               onChange={e => updateSettings({ keepRecordings: e.target.checked })}
               className="accent-celeste shrink-0 w-4 h-4" />
           </label>
+        </Section>
+
+        <Section id="drinks" title="Buy me a drink">
+          <DrinksPanel />
         </Section>
 
         <Section title="Help">

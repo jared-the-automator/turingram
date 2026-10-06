@@ -15,7 +15,7 @@ export type Screen =
   | { name: 'recording' }
   | { name: 'speakers'; meetingId: string }
   | { name: 'transcript'; meetingId: string }
-  | { name: 'settings' }
+  | { name: 'settings'; section?: 'drinks' }
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>({ name: 'list' });
@@ -28,7 +28,7 @@ export default function App() {
         {screen.name === 'recording' && <ActiveRecording onNavigate={navigate} />}
         {screen.name === 'speakers' && <SpeakerAssignment meetingId={screen.meetingId} onNavigate={navigate} />}
         {screen.name === 'transcript' && <TranscriptView meetingId={screen.meetingId} onNavigate={navigate} />}
-        {screen.name === 'settings' && <Settings onNavigate={navigate} />}
+        {screen.name === 'settings' && <Settings section={screen.section} onNavigate={navigate} />}
         <MeetingToast onNavigate={navigate} />
         <DrinkNag onNavigate={navigate} />
         <ConsentModal />

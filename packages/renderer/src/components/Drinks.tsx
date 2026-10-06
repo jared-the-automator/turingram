@@ -44,7 +44,7 @@ export function DrinkNag({ onNavigate }: { onNavigate: (s: Screen) => void }) {
         <div className="text-[12px] font-medium text-hi">{line}</div>
         <TierLinks tiers={state.tiers} compact />
         <div className="flex items-center gap-2 justify-end">
-          <button onClick={() => { setLine(null); onNavigate({ name: 'settings' }); }}
+          <button onClick={() => { setLine(null); onNavigate({ name: 'settings', section: 'drinks' }); }}
             className="text-[11px] text-sub hover:text-hi px-2.5 py-1.5 transition-colors">
             I already bought one
           </button>
