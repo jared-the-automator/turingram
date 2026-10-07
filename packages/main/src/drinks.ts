@@ -145,6 +145,7 @@ export async function drinkState(dataDir: string, publicKey = DRINK_PUBLIC_KEY):
     recordedSec: ledger.recordedSec,
     meetings: ledger.meetings,
     bought: claim ? TIERS.find(t => t.id === claim.tier)!.label : null,
+    asked: ledger.nags > 0,
     tiers: TIERS.map(t => ({ id: t.id, label: t.label, amount: t.amount, url: checkoutUrl(t.link, ledger.install) })),
   };
 }

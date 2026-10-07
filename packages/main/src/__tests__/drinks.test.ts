@@ -56,6 +56,13 @@ describe('the ask', () => {
     expect(await recordMeeting(dir, 1)).not.toBeNull();
   });
 
+  it('reports the install as asked only after the first ask', async () => {
+    await recordMeeting(dir, NAG_EVERY_SEC - 1);
+    expect((await drinkState(dir)).asked).toBe(false);
+    await recordMeeting(dir, 1);
+    expect((await drinkState(dir)).asked).toBe(true);
+  });
+
   it('never asks a paid install', async () => {
     const { pub, mint } = await minter();
     expect(await redeem(dir, await mint(loadLedger(dir).install), pub)).toBe(true);

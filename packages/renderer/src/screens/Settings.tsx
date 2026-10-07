@@ -240,12 +240,19 @@ export default function Settings({ onNavigate, section }: Props) {
     }
   }, [settings?.vocabulary]);
 
+  // The drink section stays hidden until the first ask, so nobody meets a
+  // price before the app has earned one. A bought install keeps it, for the thanks.
+  const [showDrinks, setShowDrinks] = useState(false);
+  useEffect(() => {
+    window.api.getDrinkState().then(s => setShowDrinks(s.asked || s.bought != null)).catch(() => setShowDrinks(false));
+  }, []);
+
   // The drink ask's "I already bought one" lands here, and the drink section sits
   // near the bottom, below everything people come to Settings for.
   const loaded = settings != null;
   useEffect(() => {
     if (loaded && section) document.getElementById(section)?.scrollIntoView({ block: 'start' });
-  }, [loaded, section]);
+  }, [loaded, section, showDrinks]);
 
   function handleVocabularySave() {
     const parsed = vocabularyText
@@ -390,9 +397,11 @@ export default function Settings({ onNavigate, section }: Props) {
           </label>
         </Section>
 
-        <Section id="drinks" title="Buy me a drink">
-          <DrinksPanel />
-        </Section>
+        {showDrinks && (
+          <Section id="drinks" title="Buy me a drink">
+            <DrinksPanel />
+          </Section>
+        )}
 
         <Section title="Help">
           <div className="flex items-center justify-between gap-3">

@@ -88,7 +88,7 @@ Settings → Help → Report a problem opens a GitHub issue form. The app fills 
 
 ## Buy me a drink
 
-Turingram is free. After every 12 hours of recording, it asks you to buy the developer a drink. A drink costs from $4 to $48 and goes through Stripe Checkout. After the payment, the thank-you page shows a token. Paste it into Settings → Buy me a drink, and the app stops asking on that computer. The app checks the token offline against a public key in `packages/main/src/drinks.ts`. No setting turns the ask off, but you can just reject it every time. Or hey, it's open source; you're welcome to rebuild it yourself without the nag.
+Turingram is free. After every 12 hours of recording, it asks you to buy the developer a drink. A drink costs from $4 to $48 and goes through Stripe Checkout. After the payment, the thank-you page shows a token. Paste it into Settings → Buy me a drink, and the app stops asking on that computer. That section of Settings appears after the first ask. The app checks the token offline against a public key in `packages/main/src/drinks.ts`. No setting turns the ask off, but you can just reject it every time. Or hey, it's open source; you're welcome to rebuild it yourself without the nag.
 
 ## Website
 

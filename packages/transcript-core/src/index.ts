@@ -81,6 +81,8 @@ export interface DrinkState {
   meetings: number
   /** the label of the drink this install bought, or null */
   bought: string | null
+  /** true once this install has seen the ask; Settings hides the drink section until then */
+  asked: boolean
   tiers: Array<{ id: DrinkTierId; label: string; amount: number; url: string }>
 }
 
