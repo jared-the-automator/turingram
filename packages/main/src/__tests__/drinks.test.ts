@@ -71,7 +71,7 @@ describe('the ask', () => {
 
   it('counts meetings and quotes true numbers', () => {
     const ledger = { ...loadLedger(dir), recordedSec: 13 * 3600, meetings: 1, nags: 1 };
-    expect(nagLine(ledger)).toBe('1 meeting, 13 hours, every word written down. A coffee would go down well.');
+    expect(nagLine(ledger)).toBe('1 meeting, 13 hours, every word written down. I could really use a cup of coffee right now.');
   });
 });
 

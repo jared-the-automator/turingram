@@ -98,10 +98,10 @@ export function nagLine(ledger: Ledger): string {
   const meetings = plural(ledger.meetings, 'meeting');
   const lines = [
     `Turingram has recorded ${hours} of your meetings. Buy me a drink?`,
-    `${meetings}, ${hours}, every word written down. A coffee would go down well.`,
+    `${meetings}, ${hours}, every word written down. I could really use a cup of coffee right now.`,
     `${hours} of meetings recorded. I'm not counting. I am absolutely counting.`,
-    `${meetings} transcribed and zero drinks. Buy me one?`,
-    `${hours} of other people talking, and I wrote it all down. My round is never. Yours could be now.`,
+    `${meetings} transcribed works up a thirst. Buy me a drink?`,
+    `${hours} of other people talking, and I wrote it all down. *wink wink* *nudge nudge*`,
   ];
   return lines[ledger.nags % lines.length];
 }
