@@ -1,6 +1,6 @@
 {
   "name": "turingram-workspace",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Bot-free meeting capture that writes transcripts your agents can read",
   "license": "GPL-3.0-only",
   "author": {
