@@ -2,9 +2,13 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-  <!-- Required for ScreenCaptureKit system audio capture -->
+  <!-- V8 needs JIT memory under the hardened runtime. Without these two the app
+       dies with SIGTRAP inside v8::Isolate::Initialize before any window opens.
+       Same pair as electron-builder's default entitlements template. -->
   <key>com.apple.security.cs.allow-jit</key>
-  <false/>
+  <true/>
+  <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+  <true/>
   <key>com.apple.security.device.audio-input</key>
   <true/>
   <!-- Hardened runtime: allow loading dylibs and running helper tools -->
